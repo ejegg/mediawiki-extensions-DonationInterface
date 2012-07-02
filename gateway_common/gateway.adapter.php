@@ -74,11 +74,19 @@ interface GatewayType {
 	function defineTransactions();
 
 	/**
+	 */
+	function defineErrorMap();
+
+	/**
 	 * defineVarMap needs to set up the $var_map array. 
 	 * Keys = the name (or node name) value in the gateway transaction
 	 * Values = the mediawiki field name for the corresponding piece of data. 
 	 */
 	function defineVarMap();
+
+	/**
+	 */
+	function defineDataConstraints();
 
 	/**
 	 * defineAccountInfo needs to set up the $accountInfo array. 
