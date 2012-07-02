@@ -35,4 +35,9 @@ class AmazonAdapter extends GatewayAdapter
 	function defineAccountInfo() {}
 	function defineReturnValueMap() {}
 	function defineDataConstraints() {}
+
+	function storeLimbo()
+	{
+		$this->doLimboStompTransaction();
+	}
 }
