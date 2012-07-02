@@ -108,6 +108,9 @@ error_log($query_str);
 		$message = "GET\n{$parsed_uri['host']}\n{$path_encoded}\n{$query_str}";
 
 		$signature = rawurlencode(base64_encode(hash_hmac('sha256', $message, $secret_key, TRUE)));
+
+		$this->adapter->storeLimbo();
+
 		header("Location: {$gateway_uri}?{$query_str}&signature={$signature}");
 	}
 }
