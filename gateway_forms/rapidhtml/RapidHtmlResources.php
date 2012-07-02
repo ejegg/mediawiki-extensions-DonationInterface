@@ -8,6 +8,7 @@
 $wgDonationInterfaceRapidHtmlRemoteExtPath = 'DonationInterface/gateway_forms/rapidhtml';
 $wgPayflowRapidHtmlRemoteExtPath = 'DonationInterface/payflowpro_gateway/forms';
 $wgGlobalCollectRapidHtmlRemoteExtPath = 'DonationInterface/globalcollect_gateway/forms';
+$wgAmazonRapidHtmlRemoteExtPath = 'DonationInterface/amazon_gateway/forms';
 
 /**
  * LIGHTBOX
@@ -247,5 +248,15 @@ $wgResourceModules[ 'pfp.form.rapidhtml.TwoStepTwoColumnLetter3.orig' ] = array(
 	'dependencies' => array( 'di.form.core.validate' ),
 	'localBasePath' => dirname( __FILE__ ).'/../../payflowpro_gateway/forms',
 	'remoteExtPath' => $wgPayflowRapidHtmlRemoteExtPath,
+);
+
+/**
+ * Amazon
+ */
+$wgResourceModules[ 'amazon.form.rapidhtml.amazon' ] = array(
+	'scripts' => 'js/amazon.js',
+	'dependencies' => array( 'di.form.core.validate' ),
+	'localBasePath' => dirname( __FILE__ ).'/../../amazon_gateway/forms',
+	'remoteExtPath' => $wgAmazonRapidHtmlRemoteExtPath,
 );
 
