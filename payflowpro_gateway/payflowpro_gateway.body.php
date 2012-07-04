@@ -30,7 +30,7 @@ class PayflowProGateway extends GatewayForm {
 		 *  and the PaypalRedirect form value must be true
 		 */
 		if ( $wgRequest->getText( 'PaypalRedirect', 0 ) ) {
-			$this->paypalRedirect();
+			$this->handoffRedirect();
 			return;
 		}
 		
