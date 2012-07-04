@@ -1518,14 +1518,8 @@ abstract class GatewayAdapter implements GatewayType {
 		}
 
 		// send the thing.
-		$transaction = array(
-			'response' => $this->getTransactionMessage(),
-			'date' => time(),
-			'gateway_txn_id' => $this->getTransactionGatewayTxnID(),
-			//'language' => '',
-		);
-		$transaction += $this->getData_Unstaged_Escaped();
 
+		$transaction = $this->getTransaction();
 		try {
 			wfRunHooks( $hook, array( $transaction ) );
 		} catch ( Exception $e ) {
@@ -1561,37 +1555,51 @@ abstract class GatewayAdapter implements GatewayType {
 		$this->debugarray[] = "Attempting Limbo Stomp Transaction!";
 		$hook = 'gwLimboStomp';
 
-		$stomp_fields = $this->dataObj->getStompMessageFields();
-		
-		if ($antimessage){
-			$transaction = array(
-				'date' => time(),
-				'gateway_txn_id' => $this->getTransactionGatewayTxnID(),
-				'correlation-id' => $this->getCorrelationID(),
-				'payment_method' => $this->getData_Unstaged_Escaped( 'payment_method' ),
-				'antimessage' => 'true'
-			);
-		} else {
-			$transaction = array(
-				'response' => $this->getTransactionMessage(),
-				'date' => time(),
-				'gateway_txn_id' => $this->getTransactionGatewayTxnID(),
-				'correlation-id' => $this->getCorrelationID(),
-				'payment_method' => $this->getData_Unstaged_Escaped( 'payment_method' ),
-			);
-			
-			$unstaged_local = array();
-			foreach ( $stomp_fields as $field ){	
-				$unstaged_local[$field] = $this->getData_Unstaged_Escaped( $field );
-			}
-			$transaction = array_merge( $unstaged_local, $transaction );
-		}
+		$transaction = $this->getTransaction(array(
+			'antimessage' => $antimessage,
+		));
 
 		try {
 			wfRunHooks( $hook, array( $transaction ) );
 		} catch ( Exception $e ) {
 			self::log( "STOMP ERROR. Could not add message. " . $e->getMessage() , LOG_CRIT );
 		}
+	}
+
+	function getTransaction($options = array())
+	{
+		$transaction = array(
+			'gateway_txn_id' => $this->getTransactionGatewayTxnID(),
+			'payment_method' => $this->getData_Unstaged_Escaped( 'payment_method' ),
+			'response' => $this->getTransactionMessage(),
+			'correlation-id' => $this->getCorrelationID(),
+		);
+		if (!empty($options['antimessage']))
+		{
+			$transaction['antimessage'] = 'true';
+		}
+		else
+		{
+			$stomp_fields = $this->dataObj->getStompMessageFields();
+			$stomp_data = array_intersect_key(
+				$this->getData_Unstaged_Escaped(),
+				array_combine($stomp_fields, $stomp_fields)
+			);
+			$transaction += $stomp_data;
+		}
+
+		if ( !is_null( $this->getData_Unstaged_Escaped( 'date' ) ) ) {
+			$timestamp = $this->getData_Unstaged_Escaped( 'date' );
+		} else {
+			if ( !is_null( $this->getData_Unstaged_Escaped( 'ts' ) ) ) {
+				$timestamp = strtotime( $this->getData_Unstaged_Escaped( 'ts' ) ); //I hate that this works.
+			} else {
+				$timestamp = time();
+			}
+		}
+		$transaction['date'] = $timestamp;
+
+		return $transaction;
 	}
 	
 	protected function getCorrelationID(){
