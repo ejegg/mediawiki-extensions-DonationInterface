@@ -628,15 +628,16 @@ if ( $optionalParts['PayflowPro'] === true ){
  * HOOKS
  */
 
+$wgHooks['GatewayHandoff'][] = array( 'GatewayAdapter::updateContributionTracking' );
+
 //Unit tests
 $wgHooks['UnitTestsList'][] = 'efDonationInterfaceUnitTests';
 
 //Stomp hooks
 if ($optionalParts['Stomp'] === true){
 	$wgHooks['ParserFirstCallInit'][] = 'efStompSetup';
-	$wgHooks['gwStomp'][] = 'sendSTOMP';
-	$wgHooks['gwPendingStomp'][] = 'sendPendingSTOMP';
-	$wgHooks['gwLimboStomp'][] = 'sendLimboSTOMP';
+	$wgHooks['GatewayPostProcess'][] = 'postProcessStomp';
+	$wgHooks['GlobalCollectAdapterGatewayHandoff'][] = 'sendLimboSTOMP';
 }
 
 //Custom Filters hooks

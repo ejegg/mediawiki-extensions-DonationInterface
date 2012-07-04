@@ -103,7 +103,7 @@ class Gateway_Extras_CustomFilters extends Gateway_Extras {
 	 */
 	public function validate() {
 		// expose a hook for custom filters
-		wfRunHooks( 'GatewayCustomFilter', array( &$this->gateway_adapter, &$this ) );
+		runHooks( 'GatewayCustomFilter', $this->gateway_adapter, $this );
 		$localAction = $this->determineAction();
 		$this->gateway_adapter->setValidationAction( $localAction );
 
