@@ -1603,65 +1603,6 @@ abstract class GatewayAdapter implements GatewayType {
 		}
 	}
 	
-	function getPaypalRedirectURL() {
-		$currency = $this->getData_Unstaged_Escaped( 'currency_code' );
-
-		// update the utm source to set the payment instrument to pp rather than cc
-		$data['payment_method'] = 'pp';
-		$data['currency_code'] = ( !is_null( $currency ) ) ? $currency : 'USD';
-
-		// Add our response vars to the data object, and restage if necessary.
-		$this->addData( $data );
-		
-		//update contribution tracking
-		$this->dataObj->updateContributionTracking( true );
-
-		$ret = self::getGlobal( "PaypalURL" ) . "/" . $this->staged_data['language'] . "?gateway=paypal&" . http_build_query( $this->getPaypalData() );
-		self::log( $ret );
-		return $ret;
-	}
-
-	protected function getPaypalData() {
-		$paypalkeys = array(
-			'contribution_tracking_id',
-			'comment',
-			'referrer',
-			'comment-option',
-			'utm_source',
-			'utm_medium',
-			'utm_campaign',
-			'email-opt',
-			'language',
-			'owa_session',
-			'owa_ref',
-			'tshirt',
-			'returnto',
-			'currency_code',
-			'fname',
-			'lname',
-			'email',
-			'address1',
-			'city',
-			'state',
-			'zip',
-			'country',
-			'address_override',
-			'recurring_paypal',
-			'amount',
-			'amountGiven',
-			'size',
-			'premium_language',
-		);
-		$ret = array();
-		foreach ( $paypalkeys as $key ){
-			$val = $this->getData_Unstaged_Escaped( $key );
-			if (!is_null( $val )){
-				$ret[$key] = $this->getData_Unstaged_Escaped( $key );
-			}
-		}
-		return $ret;
-	}
-
 	public function getTransactionAllResults() {
 		if ( $this->transaction_results && is_array( $this->transaction_results ) ) {
 			return $this->transaction_results;

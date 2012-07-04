@@ -65,13 +65,10 @@ EOT;
 		$this->setHeaders();
 
 		/**
-		 *  handle PayPal redirection
-		 *
-		 *  if paypal redirection is enabled ($wgPayflowProGatewayPaypalURL must be defined)
-		 *  and the PaypalRedirect form value must be true
+		 *  handle redirect
 		 */
 		if ( $wgRequest->getText( 'PaypalRedirect', 0 ) ) {
-			$this->paypalRedirect();
+			$this->handoffRedirect(/* XXX */);
 			return;
 		}
 
