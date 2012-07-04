@@ -130,6 +130,7 @@ if ( $optionalParts['PayflowPro'] === true ){
 //Stomp classes
 if ($optionalParts['Stomp'] === true){
 	$wgAutoloadClasses['activemq_stomp'] = $donationinterface_dir . 'activemq_stomp/activemq_stomp.php'; # Tell MediaWiki to load the extension body.
+	$wgAutoloadClasses['Stomp'] = $donationinterface_dir . 'activemq_stomp/Stomp.php'; # Tell MediaWiki to load the extension body.
 }
 
 //Extras classes - required for ANY optional class that is considered an "extra".
