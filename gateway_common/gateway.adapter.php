@@ -74,11 +74,19 @@ interface GatewayType {
 	function defineTransactions();
 
 	/**
+	 */
+	function defineErrorMap();
+
+	/**
 	 * defineVarMap needs to set up the $var_map array. 
 	 * Keys = the name (or node name) value in the gateway transaction
 	 * Values = the mediawiki field name for the corresponding piece of data. 
 	 */
 	function defineVarMap();
+
+	/**
+	 */
+	function defineDataConstraints();
 
 	/**
 	 * defineAccountInfo needs to set up the $accountInfo array. 
@@ -1692,7 +1700,7 @@ abstract class GatewayAdapter implements GatewayType {
 	}
 
 	public function getTransactionMessage() {
-		if ( array_key_exists( 'txn_message', $this->transaction_results ) ) {
+		if ( $this->transaction_results && array_key_exists( 'txn_message', $this->transaction_results ) ) {
 			return $this->transaction_results['txn_message'];
 		} else {
 			return false;
@@ -1700,7 +1708,7 @@ abstract class GatewayAdapter implements GatewayType {
 	}
 
 	public function getTransactionGatewayTxnID() {
-		if ( array_key_exists( 'gateway_txn_id', $this->transaction_results ) ) {
+		if ( $this->transaction_results && array_key_exists( 'gateway_txn_id', $this->transaction_results ) ) {
 			return $this->transaction_results['gateway_txn_id'];
 		} else {
 			return false;
