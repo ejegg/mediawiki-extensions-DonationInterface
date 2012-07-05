@@ -17,11 +17,10 @@ function runHooks($hook /*, args... */)
 	}
 }
 
-function do_wfRunHooks($hook, $args);
+function do_wfRunHooks($hook, $args)
 {
 	if (function_exists('wfRunHooks'))
 	{
-error_log($hook);
 		wfRunHooks($hook, $args);
 		if (count($args))
 		{

@@ -58,7 +58,7 @@ function postProcessStomp($adapter)
 			$queue = 'pending';
 			break;
 	}
-	if ( $queue === '' ) {
+	if ( empty($queue) ) {
 		throw new Exception("No Stomp queue found for WMF_Status {$status}");
 	}
 
@@ -116,7 +116,8 @@ function enqueueTransaction( $transaction, $queue, $properties = array() )
 	$con = new Stomp( $wgStompServer );
 
 	// connect
-	$con->connect();
+	if (method_exists($con, 'connect'))
+		$con->connect();
 
 	// send a message to the queue
 	$result = $con->send( "/queue/$queueName", $message, $properties );

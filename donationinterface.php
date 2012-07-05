@@ -43,6 +43,7 @@ $optionalParts = array( //define as fail closed. This variable will be unset bef
 	'PayflowPro' => false,
 	'GlobalCollect' => false,
 	'Amazon' => false,
+	'Dummy' => true,
 	'ReferrerFilter' => false, //extra
 	'SourceFilter' => false, //extra
 	'FunctionsFilter' => false, //extra
@@ -133,11 +134,15 @@ if ( $optionalParts['Amazon'] === true ){
 	$wgAutoloadClasses['AmazonAdapter'] = $donationinterface_dir . 'amazon_gateway/amazon.adapter.php';
 }
 
+if ( $optionalParts['Amazon'] === true ){
+	$wgAutoloadClasses['DummyGateway'] = $donationinterface_dir . 'dummy_gateway/dummy_gateway.body.php';
+	$wgAutoloadClasses['DummyAdapter'] = $donationinterface_dir . 'dummy_gateway/dummy.adapter.php';
+}
 
 //Stomp classes
 if ($optionalParts['Stomp'] === true){
 	$wgAutoloadClasses['activemq_stomp'] = $donationinterface_dir . 'activemq_stomp/activemq_stomp.php'; # Tell MediaWiki to load the extension body.
-	$wgAutoloadClasses['Stomp'] = $donationinterface_dir . 'activemq_stomp/Stomp.php'; # Tell MediaWiki to load the extension body.
+	// $wgAutoloadClasses['Stomp'] = $donationinterface_dir . 'activemq_stomp/Stomp.php'; # Tell MediaWiki to load the extension body.
 }
 
 //Extras classes - required for ANY optional class that is considered an "extra".
@@ -640,6 +645,9 @@ if ( $optionalParts['Amazon'] === true ){
 	$wgSpecialPages['AmazonGateway'] = 'AmazonGateway';
 	$wgSpecialPages['AmazonGatewayResult'] = 'AmazonGatewayResult';
 }
+if ( $optionalParts['Dummy'] === true ){
+	$wgSpecialPages['DummyGateway'] = 'DummyGateway';
+}
 
 
 /**
@@ -656,6 +664,7 @@ if ($optionalParts['Stomp'] === true){
 	$wgHooks['ParserFirstCallInit'][] = 'efStompSetup';
 	$wgHooks['GatewayPostProcess'][] = 'postProcessStomp';
 	$wgHooks['GlobalCollectAdapterGatewayHandoff'][] = 'sendLimboSTOMP';
+	$wgHooks['DummyAdapterGatewayHandoff'][] = 'sendLimboSTOMP';
 }
 
 //Custom Filters hooks
@@ -850,6 +859,12 @@ $wgResourceModules[ 'pfp.core.logolink_override' ] = array(
 	'localBasePath' => $donationinterface_dir . 'payflowpro_gateway',
 	'remoteExtPath' => 'DonationInterface/payflowpro_gateway',
 
+);
+
+$wgResourceModules[ 'dummy.testControls' ] = array(
+	'scripts' => 'dummy.testControls.js',
+	'localBasePath' => $donationinterface_dir . '/dummy_gateway/modules/js',
+	'remoteExtPath' => 'DonationInterface/dummy_gateway/modules/js',
 );
 
 // Load the interface messages that are shared across multiple gateways
