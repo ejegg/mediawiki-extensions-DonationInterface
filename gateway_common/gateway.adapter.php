@@ -856,9 +856,6 @@ abstract class GatewayAdapter implements GatewayType {
 				return $this->getTransactionAllResults();
 			}
 
-			//TODO: Maybe move this to the pre_process functions? 
-			$this->dataObj->updateContributionTracking( defined( 'OWA' ) );
-
 			// If the payment processor requires XML, package our data into XML.
 			if ( $this->getCommunicationType() === 'xml' ) {
 				$this->getStopwatch( "buildRequestXML", true ); // begin profiling
@@ -1481,91 +1478,6 @@ abstract class GatewayAdapter implements GatewayType {
 		$this->debugarray[] = 'Killed all the session everything.';
 	}
 
-	/**
-	 * Saves a stomp frame to the configured server and queue, based on the 
-	 * outcome of our current transaction. 
-	 * The big tricky thing here, is that we DO NOT SET a TransactionWMFStatus, 
-	 * unless we have just learned what happened to a donation in progress, 
-	 * through performing the current transaction. 
-	 * To put it another way, getTransactionWMFStatus should always return 
-	 * false, unless it's new data about a new transaction. In that case, the 
-	 * outcome will be assigned and the proper stomp hook selected. 
-	 * 
-	 * Probably called in runPostProcessHooks(), which is itself most likely to 
-	 * be called through executeFunctionIfExists, later on in do_transaction. 
-	 * @return null 
-	 */
-	protected function doStompTransaction() {
-		if ( !$this->getGlobal( 'EnableStomp' ) ){
-			return;
-		}
-		$this->debugarray[] = "Attempting Stomp Transaction!";
-		$hook = '';
-
-		$status = $this->getTransactionWMFStatus();
-		switch ( $status ) {
-			case 'complete':
-				$hook = 'gwStomp';
-				break;
-			case 'pending':
-			case 'pending-poke':
-				$hook = 'gwPendingStomp';
-				break;
-		}
-		if ( $hook === '' ) {
-			$this->debugarray[] = "No Stomp Hook Found for WMF_Status $status";
-			return;
-		}
-
-		// send the thing.
-
-		$transaction = $this->getTransaction();
-		try {
-			wfRunHooks( $hook, array( $transaction ) );
-		} catch ( Exception $e ) {
-			self::log( "STOMP ERROR. Could not add message. " . $e->getMessage() , LOG_CRIT );
-		}
-	}
-	
-	
-	/**
-	 * Function that adds a stomp message to a special 'limbo' queue, for data 
-	 * that is either highly likely or completely guaranteed to be bifurcated by 
-	 * handing the ball to a third-party process. 
-	 * TODO: Functionalize some of the code copied from doStompTransaction.  
-	 * @return null 
-	 */
-	protected function doLimboStompTransaction( $antimessage = false ) {
-		if ( !$this->getGlobal( 'EnableStomp' ) ){
-			return;
-		}
-		
-		if ($this->getData_Unstaged_Escaped( 'payment_method' ) === 'cc'){
-			global $wgCCLimboStompQueueName;
-			if ( !isset( $wgCCLimboStompQueueName ) || $wgCCLimboStompQueueName === false ){
-				return;
-			}
-		} else {
-			global $wgLimboStompQueueName;
-			if ( !isset( $wgLimboStompQueueName ) || $wgLimboStompQueueName === false ){
-				return;
-			}
-		}
-		
-		$this->debugarray[] = "Attempting Limbo Stomp Transaction!";
-		$hook = 'gwLimboStomp';
-
-		$transaction = $this->getTransaction(array(
-			'antimessage' => $antimessage,
-		));
-
-		try {
-			wfRunHooks( $hook, array( $transaction ) );
-		} catch ( Exception $e ) {
-			self::log( "STOMP ERROR. Could not add message. " . $e->getMessage() , LOG_CRIT );
-		}
-	}
-
 	function getTransaction($options = array())
 	{
 		$transaction = array(
@@ -1981,7 +1893,7 @@ abstract class GatewayAdapter implements GatewayType {
 	function runPreProcessHooks() {
 		// allow any external validators to have their way with the data
 		self::log( $this->getData_Unstaged_Escaped( 'contribution_tracking_id' ) . " Preparing to query MaxMind" );
-		wfRunHooks( 'GatewayValidate', array( &$this ) );
+		runHooks( 'GatewayValidate', array( &$this ) );
 		self::log( $this->getData_Unstaged_Escaped( 'contribution_tracking_id' ) . ' Finished querying Maxmind' );
 
 		//DO NOT set some variable as getValidationAction() here, and keep 
@@ -1990,19 +1902,19 @@ abstract class GatewayAdapter implements GatewayType {
 		// if the transaction was flagged for review
 		if ( $this->getValidationAction() == 'review' ) {
 			// expose a hook for external handling of trxns flagged for review
-			wfRunHooks( 'GatewayReview', array( &$this ) );
+			runHooks( 'GatewayReview', array( &$this ) );
 		}
 
 		// if the transaction was flagged to be 'challenged'
 		if ( $this->getValidationAction() == 'challenge' ) {
 			// expose a hook for external handling of trxns flagged for challenge (eg captcha)
-			wfRunHooks( 'GatewayChallenge', array( &$this ) );
+			runHooks( 'GatewayChallenge', array( &$this ) );
 		}
 
 		// if the transaction was flagged for rejection
 		if ( $this->getValidationAction() == 'reject' ) {
 			// expose a hook for external handling of trxns flagged for rejection
-			wfRunHooks( 'GatewayReject', array( &$this ) );
+			runHooks( 'GatewayReject', array( &$this ) );
 			$this->unsetAllSessionData();
 		}
 	}
@@ -2016,8 +1928,11 @@ abstract class GatewayAdapter implements GatewayType {
 	 */
 	protected function runPostProcessHooks() {
 		// expose a hook for any post processing
-		wfRunHooks( 'GatewayPostProcess', array( &$this ) ); //conversion log (at least)
-		$this->doStompTransaction();
+		runHooks( 'GatewayPostProcess', array( &$this ) ); //conversion log (at least)
+	}
+
+	protected function runHandoffHooks($options = array()) {
+		runHooks( 'GatewayHandoff', array( $this, $options ) );
 	}
 
 	/**
@@ -2379,5 +2294,11 @@ abstract class GatewayAdapter implements GatewayType {
 			. $source . ' ] score = ' . $score;
 
 		return $score;
+	}
+
+	static function updateContributionTracking($adapter)
+	{
+		$adapter->dataObj->updateContributionTracking( defined( 'OWA' ) );
+		return true;
 	}
 }
