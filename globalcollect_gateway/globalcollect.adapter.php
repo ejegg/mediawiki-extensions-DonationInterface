@@ -1247,7 +1247,7 @@ class GlobalCollectAdapter extends GatewayAdapter {
 			//As it happens, we can't remove things from the queue here: It 
 			//takes way too dang long. (~5 seconds!)
 			//So, instead, I'll add an anti-message and deal with it later. (~.01 seconds) 
-			$this->runHandoffHooks( array( "antimessage" => TRUE );
+			$this->runHandoffHooks( array( "antimessage" => TRUE ) );
 		}
 		
 		if ( $problemflag ){
