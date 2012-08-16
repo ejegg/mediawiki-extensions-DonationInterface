@@ -120,6 +120,11 @@ if ( $optionalParts['Amazon'] === true ){
 	$wgAutoloadClasses['AmazonAdapter'] = $donationinterface_dir . 'amazon_gateway/amazon.adapter.php';
 }
 
+if ( $optionalParts['Adyen'] === true ){
+	$wgAutoloadClasses['AdyenGateway'] = $donationinterface_dir . 'adyen_gateway/adyen_gateway.body.php';
+	$wgAutoloadClasses['AdyenAdapter'] = $donationinterface_dir . 'adyen_gateway/adyen.adapter.php';
+}
+
 
 //Stomp classes
 if ($optionalParts['Stomp'] === true){
@@ -365,6 +370,10 @@ if ( $optionalParts['Amazon'] === true ){
 	// does NOT accept unroutable development names, use the number instead
 	// even if it's 127.0.0.1
 	$wgAmazonGatewayReturnURL = "";
+}
+
+if ( $optionalParts['Adyen'] === true ){
+	$wgAdyenGatewayHtmlFormDir = $donationinterface_dir . 'adyen_gateway/forms/html';
 }
 
 //Stomp globals
@@ -659,6 +668,10 @@ if ( $optionalParts['PayflowPro'] === true ){
 //Amazon Simple Payment gateway special pages
 if ( $optionalParts['Amazon'] === true ){
 	$wgSpecialPages['AmazonGateway'] = 'AmazonGateway';
+}
+//Adyen gateway special pages
+if ( $optionalParts['Adyen'] === true ){
+	$wgSpecialPages['AdyenGateway'] = 'AdyenGateway';
 }
 
 

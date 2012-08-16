@@ -40,8 +40,11 @@ class DonationApi extends ApiBase {
 				default:
 					$result = $gatewayObj->do_transaction( 'TEST_CONNECTION' );
 			}
+		} elseif ( $this->gateway == 'adyen' ) {
+			$gatewayObj = new AdyenAdapter();
+			$result = $gatewayObj->do_transaction( 'donate' );
 		} else {
-			$this->dieUsage( "Invalid gateway <<<$gateway>>> passed to Donation API.", 'unknown_gateway' );
+			$this->dieUsage( "Invalid gateway <<<{$this->gateway}>>> passed to Donation API.", 'unknown_gateway' );
 		}
 
 		//$normalizedData = $gatewayObj->getData_Unstaged_Escaped();
@@ -71,6 +74,9 @@ class DonationApi extends ApiBase {
 
 		if ( $this->donationData ) {
 			$this->getResult()->addValue( null, 'request', $this->donationData );
+		}
+		if ( array_key_exists( 'gateway_params', $result ) ) {
+			$this->getResult()->addValue( null, 'gateway_params', $result['gateway_params'] );
 		}
 		$this->getResult()->addValue( null, 'result', $outputResult );
 
@@ -146,7 +152,7 @@ class DonationApi extends ApiBase {
 			'language' => 'en',
 			'card_type' => 'american',
 		);
-		if ( $gateway != 'globalcollect' ) {
+		if ( $this->gateway != 'globalcollect' ) {
 			$params += array(
 				'card_num' => '378282246310005',
 				'expiration' => date( 'my', strtotime( '+1 year 1 month' ) ),
