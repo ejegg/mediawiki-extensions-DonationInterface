@@ -43,6 +43,8 @@ $optionalParts = array( //define as fail closed. This variable will be unset bef
 	'PayflowPro' => false,
 	'GlobalCollect' => false,
 	'Amazon' => false,
+	'Paypal' => false,
+	'Moneybookers' => false,
 	'FormChooser' => false,
 	'ReferrerFilter' => false, //extra
 	'SourceFilter' => false, //extra
@@ -118,6 +120,12 @@ if ( $optionalParts['PayflowPro'] === true ){
 if ( $optionalParts['Amazon'] === true ){
 	$wgAutoloadClasses['AmazonGateway'] = $donationinterface_dir . 'amazon_gateway/amazon_gateway.body.php';
 	$wgAutoloadClasses['AmazonAdapter'] = $donationinterface_dir . 'amazon_gateway/amazon.adapter.php';
+}
+
+if ( $optionalParts['Paypal'] === true ){
+	$wgAutoloadClasses['PaypalGateway'] = $donationinterface_dir . 'paypal_gateway/paypal_gateway.body.php';
+	$wgAutoloadClasses['PaypalGatewayResult'] = $donationinterface_dir . 'paypal_gateway/paypal_resultswitcher.body.php';
+	$wgAutoloadClasses['PaypalAdapter'] = $donationinterface_dir . 'paypal_gateway/paypal.adapter.php';
 }
 
 
@@ -365,6 +373,13 @@ if ( $optionalParts['Amazon'] === true ){
 	// does NOT accept unroutable development names, use the number instead
 	// even if it's 127.0.0.1
 	$wgAmazonGatewayReturnURL = "";
+}
+
+if ( $optionalParts['Paypal'] === true ){
+	$wgPaypalGatewayURL = 'https://www.paypal.com/cgi-bin/webscr';
+	$wgPaypalGatewayTestingURL = 'https://www.sandbox.paypal.com/cgi-bin/webscr';
+	$wgPaypalGatewayReturnURL = ''; //'http://127.0.0.1/index.php/Special:PaypalGatewayResult';
+	$wgPaypalGatewayAccountEmail = '';
 }
 
 //Stomp globals
@@ -666,6 +681,11 @@ if ( $optionalParts['PayflowPro'] === true ){
 //Amazon Simple Payment gateway special pages
 if ( $optionalParts['Amazon'] === true ){
 	$wgSpecialPages['AmazonGateway'] = 'AmazonGateway';
+}
+
+if ( $optionalParts['Paypal'] === true ){
+	$wgSpecialPages['PaypalGateway'] = 'PaypalGateway';
+	$wgSpecialPages['PaypalGatewayResult'] = 'PaypalGatewayResult';
 }
 
 

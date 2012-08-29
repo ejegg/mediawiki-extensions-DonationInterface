@@ -85,7 +85,7 @@ class AmazonAdapter extends GatewayAdapter {
 			'values' => array(
 				'cobrandingStyle' => 'logo',
 				'collectShippingAddress' => '0',
-				'description' => 'Donation to the Wikimedia Foundation',
+				'description' => wfMsg( 'donate_interface-donation-description' ),
 				'immediateReturn' => '1',
 				'isDonationWidget' => '1',
 				'processImmediate' => '1',

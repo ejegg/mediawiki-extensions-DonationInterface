@@ -1,0 +1,323 @@
+commit 44bbdf4fa759301001a2c808005bfed851068c97
+Author: Adam Wight <awight@wikimedia.org>
+Date:   Tue Aug 28 13:01:50 2012 -0400
+
+    DONNOT COMMIT
+    
+    Change-Id: If2e308e510d0db6332d94b61df0ebc3213fe984a
+
+diff --git a/ApiContributionTracking.php b/ApiContributionTracking.php
+deleted file mode 100644
+index bf8aca8..0000000
+--- a/ApiContributionTracking.php
++++ /dev/null
+@@ -1,189 +0,0 @@
+-<?php
+-
+-/**
+- * This API will allow for the elimination of the interstitial page defined in
+- * ContributionTracking_body.php. Instead of posting contribution data to that
+- * page, a request to ApiContributionTracking will save contribution tracking
+- * data locally and prepare a set of data to be immediately reposted to the
+- * gateway by the original calling page. The ajax side of this is handled by
+- * jquery.contributionTracking.js.
+- * For a working example of the whole process, see
+- * ContributionTracking_Tester.php (must be sysop for permission).
+- * @author Katie Horn <khorn@wikimedia.org>
+- */
+-class ApiContributionTracking extends ApiBase {
+-
+-	public function execute( $params = null ) {
+-		if ( $params === null ) {
+-			$params = $this->extractRequestParams();
+-		}
+-		$params = $this->getStagedParams( $params );
+-		$contribution_tracking_id = ContributionTrackingProcessor::saveNewContribution( $params );
+-		$this->doReturn( $contribution_tracking_id, $params );
+-	}
+-
+-	/**
+-	 * Stages incoming request parameters for the ContributionTrackingProcessor
+-	 * @param array $params Incoming request parameters
+-	 * @return array Paramaters ready to be sent off to the processor.
+-	 */
+-	function getStagedParams( $params = null ) {
+-
+-		foreach ( $params as $key => $value ) {
+-			if ( $value === '' ) {
+-				unset( $params[$key] ); //gotcha. And might I add: BOO-URNS.
+-			}
+-		}
+-		return $params;
+-	}
+-
+-	/**
+-	 * Assembles the data for the API to return.
+-	 * @param integer $id The Contribution Tracking ID.
+-	 * @param array $params Original (staged) request paramaters.
+-	 */
+-	function doReturn( $id, $params ) {
+-//		foreach ($params as $key=>$value){
+-//			if ($value != ''){
+-//				$this->getResult()->addValue(array('returns', 'parrot'), $key, $value);
+-//			}
+-//		}
+-		$params['contribution_tracking_id'] = $id;
+-
+-		$repost = ContributionTrackingProcessor::getRepostFields( $params );
+-
+-		$this->getResult()->addValue( array( 'returns', 'action' ), 'url', $repost['action'] );
+-		foreach ( $repost['fields'] as $key => $value ) {
+-			$this->getResult()->addValue( array( 'returns', 'fields' ), $key, $value );
+-		}
+-	}
+-
+-	/**
+-	 *
+-	 * @return array An array of parameters allowed by ApiContributionTracking
+-	 */
+-	public function getAllowedParams() {
+-		return array(
+-			'amount' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-				ApiBase::PARAM_REQUIRED => true,
+-			),
+-			'referrer' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-				ApiBase::PARAM_REQUIRED => true,
+-			),
+-			'gateway' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-				ApiBase::PARAM_REQUIRED => true,
+-			),
+-			'comment' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'utm_source' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'utm_medium' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'utm_campaign' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'utm_key' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'language' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'owa_session' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'owa_ref' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'contribution_tracking_id' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'returnto' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'tshirt' => array(
+-				ApiBase::PARAM_TYPE => 'boolean',
+-			),
+-			'size' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'premium_language' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'currency_code' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'fname' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'lname' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'email' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-			'recurring_paypal' => array(
+-				ApiBase::PARAM_TYPE => 'boolean',
+-			),
+-			'amountGiven' => array(
+-				ApiBase::PARAM_TYPE => 'string',
+-			),
+-		);
+-	}
+-
+-	public function getParamDescription() {
+-		return array(
+-			'amount' => 'Transaction amount (required)',
+-			'referrer' => 'String identifying the referring entity (required)',
+-			'gateway' => array(
+-				'String identifying the specific entity used to process this payment. ',
+-				'Probably "paypal". (required)' ),
+-			'comment' => 'String with a comment. Actually saved as "note" in the database',
+-			'utm_source' => 'String identifying "utm_source"',
+-			'utm_medium' => 'String identifying "utm_medium"',
+-			'utm_campaign' => 'String identifying "utm_campaign"',
+-			'utm_key' => 'String identifying "utm_key"',
+-			'language' => array(
+-				'User language code. Messages will be translated appropriately (where possible).',
+-				'This will also determine what "Thank You" page the user sees upon completion of a donation at the gateway.' ),
+-			'owa_session' => 'String identifying the "owa_session"',
+-			'owa_ref' => 'String with the referring URL.',
+-			'contribution_tracking_id' => 'Our ID for the current contribution. Not supplied for new contributions.', //in fact, why is this here?
+-			'returnto' => 'String identifying an alternate "Thank You" page to show the user on completion of their transaction.',
+-			'tshirt' => 'Boolean indicating whether or not there is a t-shirt involved.',
+-			'size' => 'String indicating the desired size of the above t-shirt (if involved)',
+-			'premium_language' => 'Language code for the shirt. This will have no effect on message translation outside of the physical scope of the shirt.',
+-			'currency_code' => 'Currency code for the current transaction.',
+-			'fname' => "String: Donor's first name",
+-			'lname' => "String: Donor's last name",
+-			'email' => "String: Donor's email",
+-			'recurring_paypal' => 'Boolean identifying a recurring donation. Do not supply at all for a one-time donation.',
+-			'amountGiven' => 'Normalized amount.'
+-		);
+-	}
+-
+-	public function getDescription() {
+-		return array(
+-			'Track donor contributions via API',
+-			'This API exists so we are able to eliminate the interstitial page',
+-			'that would otherwise be used to track contributions before sending',
+-			'the donor off to paypal (or wherever).',
+-		);
+-	}
+-
+-	public function getExamples() {
+-		return array(
+-			'api.php?action=contributiontracking&comment=examplecomment&referrer=examplereferrer&gateway=paypal&amount=5.50',
+-		);
+-	}
+-
+-	public function getVersion() {
+-		return __CLASS__ . ': $Id$';
+-	}
+-
+-}
+diff --git a/ContributionTracking_body.php b/ContributionTracking_body.php
+deleted file mode 100644
+index e0e1a35..0000000
+--- a/ContributionTracking_body.php
++++ /dev/null
+@@ -1,114 +0,0 @@
+-<?php
+-
+-class ContributionTracking extends UnlistedSpecialPage {
+-
+-	function __construct() {
+-		parent::__construct( 'ContributionTracking' );
+-	}
+-
+-	function execute( $language ) {
+-		global $wgRequest, $wgOut, $wgContributionTrackingReturnToURLDefault;
+-
+-		if ( !preg_match( '/^[a-z-]+$/', $language ) ) {
+-			$language = 'en';
+-		}
+-		$this->lang = Language::factory( $language );
+-
+-		$this->setHeaders();
+-
+-		$wgOut->setPageTitle('');
+-
+-		$gateway = $wgRequest->getText( 'gateway' );
+-		if ( !in_array( $gateway, array( 'paypal', 'moneybookers' ) ) ) {
+-			$wgOut->showErrorPage( 'contrib-tracking-error', 'contrib-tracking-error-text' );
+-			return;
+-		}
+-
+-		// Store the contribution data
+-		if ( $wgRequest->getVal( 'contribution_tracking_id' ) ) {
+-			$contribution_tracking_id = $wgRequest->getVal( 'contribution_tracking_id', 0 );
+-		} else {
+-			$tracked_contribution = array(
+-				'note' => $wgRequest->getVal( 'comment' ),
+-				'referrer' => $wgRequest->getVal( 'referrer' ),
+-				'utm_source' => $wgRequest->getVal( 'utm_source' ),
+-				'utm_medium' => $wgRequest->getVal( 'utm_medium' ),
+-				'utm_campaign' => $wgRequest->getVal( 'utm_campaign' ),
+-				'utm_key' => $wgRequest->getVal( 'utm_key' ),
+-				'language' => $wgRequest->getVal( 'language' ),
+-				'owa_session' => $wgRequest->getVal( 'owa_session' ),
+-				'owa_ref' => $wgRequest->getVal( 'owa_ref', null ),
+-				//'ts' => $ts,
+-			);
+-			$contribution_tracking_id = ContributionTrackingProcessor::saveNewContribution( $tracked_contribution );
+-		}
+-
+-		$params = array(
+-			'gateway' => $gateway,
+-			'tshirt' => $wgRequest->getVal( 'tshirt' ),
+-			'return' => $wgRequest->getText( 'returnto', "Donate-thanks/$language" ),
+-			'currency_code' => $wgRequest->getText( 'currency_code', 'USD' ),
+-			'fname' => $wgRequest->getText( 'fname', null ),
+-			'lname' => $wgRequest->getText( 'lname', null ),
+-			'email' => $wgRequest->getText( 'email', null ),
+-			'address1' => $wgRequest->getText( 'address1', null ),
+-			'city' => $wgRequest->getText( 'city', null ),			
+-			'state' => $wgRequest->getText( 'state', null ),
+-			'zip' => $wgRequest->getText( 'zip', null ),
+-			'country' => $wgRequest->getText( 'country', null ),
+-			'address_override' => $wgRequest->getText( 'address_override', '0' ),
+-			'recurring_paypal' => $wgRequest->getText( 'recurring_paypal' ),
+-			'amount' => $wgRequest->getVal( 'amount' ),
+-			'amount_given' => $wgRequest->getVal( 'amountGiven' ),
+-			'contribution_tracking_id' => $contribution_tracking_id,
+-			'language' => $language,
+-		);
+-
+-		if ( $params['tshirt'] ) {
+-			$params['size'] = $wgRequest->getText( 'size' );
+-			$params['premium_language'] = $wgRequest->getText( 'premium_language' );
+-		}
+-
+-		foreach ( $params as $key => $value ) {
+-			if ( $value === "" || $value === null ) {
+-				unset( $params[$key] );
+-			}
+-		}
+-
+-		$repost = ContributionTrackingProcessor::getRepostFields( $params );
+-
+-		#$wgOut->addWikiText( "{{2009/Donate-banner/$language}}" );
+-		$wgOut->addHTML( $this->ct_msgWiki( 'contrib-tracking-submitting' ) );
+-
+-		// Output the repost form
+-		$output = '<form method="post" name="contributiontracking" action="' . $repost['action'] . '">';
+-
+-		foreach ( $repost['fields'] as $key => $value ) {
+-			$output .= '<input type="hidden" name="' . htmlspecialchars( $key ) . '" value="' . htmlspecialchars( $value ) . '" />';
+-		}
+-
+-		$output .= $this->ct_msgWiki( 'contrib-tracking-redirect' );
+-
+-		// Offer a button to post the form if the user has no Javascript support
+-		$output .= '<noscript>';
+-		$output .= $this->ct_msgWiki( 'contrib-tracking-continue' );
+-		$output .= '<input type="submit" value="' . $this->ct_msg( 'contrib-tracking-button' ) . '" />';
+-		$output .= '</noscript>';
+-
+-		$output .= '</form>';
+-
+-		$wgOut->addHTML( $output );
+-
+-		// Automatically post the form if the user has Javascript support
+-		$wgOut->addHTML( '<script type="text/javascript">document.contributiontracking.submit();</script>' );
+-	}
+-
+-	function ct_msg() {
+-		return wfMsgExt( func_get_arg( 0 ), array( 'escape', 'language' => $this->lang ) );
+-	}
+-
+-	function ct_msgWiki( $key ) {
+-		return wfMsgExt( $key, array( 'parse', 'language' => $this->lang ) );
+-	}
+-
+-}
