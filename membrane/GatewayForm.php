@@ -317,5 +317,51 @@ class GatewayForm extends UnlistedSpecialPage {
 	}
 
 }
+//XXX actually this doesn't belong here:
+	/**
+	 * This function sets the token to the string 'cache' if we're caching, and 
+	 * then sets the s-maxage header to whatever you specify for the SMaxAge.
+	 * NOTES: The bit where we setSquidMaxage will not work at all, under two 
+	 * conditions: 
+	 * The user has a session ID.
+	 * The mediawiki_session cookie is set in the user's browser.
+	 * @global bool $wgUseSquid
+	 * @global type $wgOut 
+	 */
+	protected function doCacheStuff() {
+		//TODO: Wow, name.
+		// if _cache_ is requested by the user, do not set a session/token; dynamic data will be loaded via ajax
+		if ( $this->isCaching() ) {
+			self::log( $this->getAnnoyingOrderIDLogLinePrefix() . ' Cache requested', LOG_DEBUG );
+			$this->setVal( 'token', 'cache' );
+
+			// if we have squid caching enabled, set the maxage
+			global $wgUseSquid, $wgOut;
+			$maxAge = $this->getGatewayGlobal( 'SMaxAge' );
+			
+			if ( $wgUseSquid && ( $maxAge !== false ) ) {
+				self::log( $this->getAnnoyingOrderIDLogLinePrefix() . ' Setting s-max-age: ' . $maxAge, LOG_DEBUG );
+				$wgOut->setSquidMaxage( $maxAge );
+			}
+		}
+	}
+
 
 //end of GatewayForm class definiton
+	
+	/**
+	 * Basically, this is a wrapper for the $wgRequest wasPosted function that 
+	 * won't give us notices if we weren't even a web request. 
+	 * I realize this is pretty lame. 
+	 * Notices, however, are more lame. 
+	 * @global type $wgRequest
+	 * @staticvar string $posted Keeps track so we don't have to figure it out twice. 
+	 */
+	public function wasPosted(){
+		global $wgRequest;
+		static $posted = null;
+		if ($posted === null){
+			$posted = (array_key_exists('REQUEST_METHOD', $_SERVER) && $wgRequest->wasPosted());
+		}
+		return $posted; 
+	}
