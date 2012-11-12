@@ -1,4 +1,8 @@
 <?php
+
+namespace membrane;
+
+class Session {
 	/**
 	 * ensureSession
 	 * Ensure that we have a session set for the current user.
@@ -103,4 +107,16 @@
 		session_unset(); //frees all registered session variables. At this point, they can still be re-registered. 
 		session_destroy(); //killed on the server. 
 	}
-
+	
+	public function integrateDataFromSession() {
+		if ( $this->session->hasData(/*'name'*/) ) {
+			//if the thing coming in from the session isn't already something, 
+			//replace it. 
+			//if it is: assume that the session data was meant to be replaced 
+			//with better data.  
+			$this->values = $this->values + $_SESSION['Donor'];
+			//...unless it's referrer. 
+			$this->values['referrer'] = $_SESSION['Donor']['referrer'];
+		}
+	}
+}

@@ -61,18 +61,6 @@ class Membrane {
 			return false;
 		}
 	}
-	
-	public function integrateDataFromSession() {
-		if ( $this->session->hasData(/*'name'*/) ) {
-			//if the thing coming in from the session isn't already something, 
-			//replace it. 
-			//if it is: assume that the session data was meant to be replaced 
-			//with better data.  
-			$this->values = $this->values + $_SESSION['Donor'];
-			//...unless it's referrer. 
-			$this->values['referrer'] = $_SESSION['Donor']['referrer'];
-		}
-	}
 
 	/**
 	 * Returns an array of normalized and escaped donation data
